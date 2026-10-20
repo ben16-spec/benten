@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bentenhehe</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EDF1F5;--panel:#FFFFFF;--ink:#14202B;--muted:#9AA7B5;--line:#D3DBE4;
+  --accent:#2B5CE6;--bad:#D1344A;--badbg:#D1344A22;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#0F1620;--panel:#172230;--ink:#DCE4EE;--muted:#566579;--line:#27364A;--accent:#7BA0FF;--bad:#FF6B81;--badbg:#FF6B8133}
+}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0F1620;--panel:#172230;--ink:#DCE4EE;--muted:#566579;--line:#27364A;--accent:#7BA0FF;--bad:#FF6B81;--badbg:#FF6B8133}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;min-height:100vh}
+main{max-width:860px;margin:0 auto;padding:32px 20px 48px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-.03em;margin:0}
+.modes{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px}
+.modes button{font:inherit;font-weight:500;border:0;background:none;color:var(--muted);padding:6px 14px;border-radius:7px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:flex;gap:32px;margin:36px 0 14px;font-variant-numeric:tabular-nums}
+.stat b{display:block;font-size:2.4rem;font-weight:800;line-height:1}
+.stat span{color:var(--muted);font-size:.9rem}
+.stat.time b{color:var(--accent)}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;cursor:text}
+.text{font-family:"Spline Sans Mono",ui-monospace,Menlo,monospace;font-size:clamp(1.1rem,2.8vw,1.5rem);line-height:2.1rem;height:6.3rem;overflow:hidden;position:relative;word-break:normal;color:var(--muted);user-select:none}
+.w{display:inline-block;white-space:nowrap}
+.c.ok{color:var(--ink)}
+.c.no{color:var(--bad);background:var(--badbg);border-radius:3px}
+.c.cur{box-shadow:inset 2px 0 0 var(--accent)}
+.stage:not(.focus) .c.cur{box-shadow:none}
+.hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--panel) 82%,transparent);border-radius:14px;color:var(--ink);font-weight:500;pointer-events:none}
+.stage.focus .hint,.stage.running .hint{display:none}
+#in{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:var(--muted);font-size:.9rem;gap:12px;flex-wrap:wrap}
+.foot button{font:inherit;font-weight:500;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 16px;cursor:pointer}
+kbd{font-family:"Spline Sans Mono",monospace;border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--panel)}
+.result{display:none;margin-top:8px}
+body.done .result{display:block}
+body.done .stage,body.done .stats{display:none}
+.big{font-size:clamp(4rem,16vw,8rem);font-weight:800;letter-spacing:-.04em;line-height:1;margin:28px 0 4px;color:var(--accent)}
+.big small{font-size:.28em;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:24px 0}
+.grid div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.grid b{display:block;font-size:1.6rem;font-variant-numeric:tabular-nums}
+.grid span{color:var(--muted);font-size:.85rem}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:280px;height:110px}
+.again{margin-top:20px;font:inherit;font-weight:800;font-size:1.05rem;background:var(--accent);color:var(--bg);border:0;border-radius:10px;padding:12px 26px;cursor:pointer}
+.best{color:var(--muted);margin:0 0 6px}
+@media (prefers-reduced-motion:no-preference){.c{transition:color .05s}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Bentenhehe</h1>
+    <div class="modes" role="group" aria-label="Test length">
+      <button data-t="15" aria-pressed="false">15s</button>
+      <button data-t="30" aria-pressed="true">30s</button>
+      <button data-t="60" aria-pressed="false">60s</button>
+    </div>
+  </header>
+
+  <section class="stats" aria-live="off">
+    <div class="stat time"><b id="time">30</b><span>seconds left</span></div>
+    <div class="stat"><b id="wpm">0</b><span>words per minute</span></div>
+    <div class="stat"><b id="acc">100%</b><span>accuracy</span></div>
+  </section>
+
+  <div class="stage" id="stage">
+    <div class="text" id="text" aria-label="Text to type"></div>
+    <div class="hint">Click here and start typing</div>
+    <textarea id="in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type here"></textarea>
+  </div>
+  <div class="foot">
+    <span>Press <kbd>Tab</kbd> to restart with new words</span>
+    <button id="restart" type="button">Restart</button>
+  </div>
+
+  <section class="result" id="result">
+    <p class="best" id="best"></p>
+    <div class="big"><span id="rWpm">0</span><small>words per minute</small></div>
+    <div class="grid">
+      <div><b id="rAcc">0%</b><span>accuracy</span></div>
+      <div><b id="rRaw">0</b><span>raw speed</span></div>
+      <div><b id="rChars">0</b><span>correct characters</span></div>
+      <div><b id="rErr">0</b><span>mistakes</span></div>
+    </div>
+    <div class="chart"><svg id="chart" viewBox="0 0 300 100" preserveAspectRatio="none" role="img" aria-label="Speed over time"></svg></div>
+    <button class="again" id="again" type="button">Try again</button>
+  </section>
+</main>
+
+<script>
+(function(){
+  var WORDS = "the of and to in is you that it he was for on are as with his they at be this from have or by one had not but what all were when we there can an your which their said if do will each about how up out them then she many some so these would other into has more her two like him see time could no make than first been its who now people my made over did down only way find use may water long little very after words called just where most know get through back much before go good new write our me man too any day same right look think also around another came come work three word must because does part even place well such here take why things help put years different away again off went old number great tell men say small every found still between name should home big give air line set own under read last never us left end along while might next sound below saw something thought both few those always looked show large often together asked house don’t world going want school important until form food keep children feet land side without boy once animals life enough took sometimes four head above kind began almost live page got earth need far hand high year mother light country father let night picture being study second soon story since white ever paper hard near sentence better best across during today however sure knew try told young sun thing whole hear example heard several change answer room sea against top turned learn point city play toward five using himself usually".split(" ");
+  var $ = function(id){return document.getElementById(id)};
+  var textEl=$("text"), input=$("in"), stage=$("stage");
+  var duration=30, target="", state="idle", started=0, timer=null;
+  var total=0, correct=0, samples=[], chars=[];
+
+  function pick(n){
+    var out=[], last="";
+    for(var i=0;i<n;i++){var w;do{w=WORDS[Math.floor(Math.random()*WORDS.length)]}while(w===last);out.push(w);last=w}
+    return out;
+  }
+  function build(){
+    var words=pick(200);
+    target=words.join(" ");
+    textEl.innerHTML="";chars=[];
+    words.forEach(function(w,wi){
+      var span=document.createElement("span");span.className="w";
+      var s=w+(wi<words.length-1?" ":"");
+      for(var i=0;i<s.length;i++){
+        var c=document.createElement("span");c.className="c";c.textContent=s[i]===" "?"\u00a0":s[i];
+        span.appendChild(c);chars.push(c);
+      }
+      textEl.appendChild(span);textEl.appendChild(document.createTextNode(" "));
+    });
+    textEl.scrollTop=0;
+    paint();
+  }
+  function paint(){
+    var v=input.value;
+    for(var i=0;i<chars.length;i++){
+      var c=chars[i],cls="c";
+      if(i<v.length)cls+=v[i]===target[i]?" ok":" no";
+      else if(i===v.length)cls+=" cur";
+      if(c.className!==cls)c.className=cls;
+    }
+    var cur=chars[Math.min(v.length,chars.length-1)];
+    if(cur){
+      var line=Math.round((cur.offsetTop-chars[0].offsetTop)/ (parseFloat(getComputedStyle(textEl).lineHeight)||34));
+      textEl.scrollTop=Math.max(0,line-1)*(parseFloat(getComputedStyle(textEl).lineHeight)||34);
+    }
+  }
+  function correctChars(){
+    var v=input.value,n=0;
+    for(var i=0;i<v.length;i++)if(v[i]===target[i])n++;
+    return n;
+  }
+  function liveWpm(){
+    var min=(Date.now()-started)/60000;
+    return min>0?Math.round(correctChars()/5/min):0;
+  }
+  function tick(){
+    var elapsed=(Date.now()-started)/1000;
+    var left=Math.max(0,Math.ceil(duration-elapsed));
+    $("time").textContent=left;
+    $("wpm").textContent=liveWpm();
+    $("acc").textContent=(total?Math.round(correct/total*100):100)+"%";
+    var sec=Math.floor(elapsed);
+    if(sec>samples.length&&sec<=duration)samples.push(liveWpm());
+    if(elapsed>=duration)finish();
+  }
+  function start(){
+    state="running";started=Date.now();stage.classList.add("running");
+    timer=setInterval(tick,100);
+  }
+  function finish(){
+    clearInterval(timer);state="done";
+    var wpm=Math.round(correctChars()/5/(duration/60));
+    var raw=Math.round(input.value.length/5/(duration/60));
+    var acc=total?Math.round(correct/total*100):100;
+    $("rWpm").textContent=wpm;$("rAcc").textContent=acc+"%";$("rRaw").textContent=raw;
+    $("rChars").textContent=correctChars();$("rErr").textContent=total-correct;
+    var key="typing-best-"+duration,prev=0;
+    try{prev=parseInt(localStorage.getItem(key)||"0",10)||0}catch(e){}
+    var msg;
+    if(wpm>prev){msg=prev?"New personal best for "+duration+" seconds.":"First result for "+duration+" seconds.";try{localStorage.setItem(key,String(wpm))}catch(e){}}
+    else msg="Your best for "+duration+" seconds is "+prev+" WPM.";
+    $("best").textContent=msg;
+    drawChart();
+    document.body.classList.add("done");
+    input.blur();$("again").focus();
+  }
+  function drawChart(){
+    var svg=$("chart"),d=samples.length?samples:[0];
+    if(d.length<2)d=[d[0],d[0]];
+    var max=Math.max.apply(null,d.concat([10])),pts=d.map(function(v,i){
+      return (10+i*(280/(d.length-1))).toFixed(1)+","+(90-(v/max)*78).toFixed(1);
+    }).join(" ");
+    svg.innerHTML='<line x1="10" y1="90" x2="290" y2="90" stroke="var(--line)" stroke-width="1"/>'+
+      '<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  }
+  function reset(){
+    clearInterval(timer);state="idle";input.value="";total=0;correct=0;samples=[];
+    $("time").textContent=duration;$("wpm").textContent="0";$("acc").textContent="100%";
+    stage.classList.remove("running");document.body.classList.remove("done");
+    build();input.focus();
+  }
+
+  input.addEventListener("input",function(e){
+    if(state==="done")return;
+    if(input.value.length>target.length)input.value=input.value.slice(0,target.length);
+    if(state==="idle"&&input.value.length)start();
+    if(e.inputType==="insertText"&&e.data){
+      for(var i=0;i<e.data.length;i++){
+        var pos=input.value.length-e.data.length+i;
+        total++;if(e.data[i]===target[pos])correct++;
+      }
+    }
+    paint();
+  });
+  input.addEventListener("focus",function(){stage.classList.add("focus")});
+  input.addEventListener("blur",function(){stage.classList.remove("focus")});
+  stage.addEventListener("click",function(){input.focus()});
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Tab"){e.preventDefault();reset();return}
+    if(state!=="done"&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&document.activeElement!==input&&e.key.length===1){input.focus()}
+  });
+  $("restart").addEventListener("click",reset);
+  $("again").addEventListener("click",reset);
+  document.querySelectorAll(".modes button").forEach(function(b){
+    b.addEventListener("click",function(){
+      duration=parseInt(b.dataset.t,10);
+      document.querySelectorAll(".modes button").forEach(function(o){o.setAttribute("aria-pressed",o===b?"true":"false")});
+      reset();
+    });
+  });
+  window.addEventListener("resize",paint);
+  build();
+})();
+</script>
+</body>
+</html>
